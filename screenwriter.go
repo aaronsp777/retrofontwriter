@@ -5,21 +5,15 @@ import (
 	_ "embed"
 )
 
+//go:embed chargen.rom
 var chargen []byte
 
 type Char struct {
 	offset int
 }
 
-func pos(p int) Char {
+func screenCode(p int) Char {
 	return Char{offset: p * 8}
-}
-
-func ScreenCode(b byte, shifted bool) Char {
-	if shifted {
-		return pos(int(b) | 256)
-	}
-	return pos(int(b))
 }
 
 // Behavior gleaned by experiments in Basic V2
@@ -61,23 +55,23 @@ func Petscii(r rune, shifted bool) Char {
 	}
 	switch {
 	case 0 <= r && r <= 31: // Control chars
-		return pos(p + 128) // Inverse Letters
+		return screenCode(p + 128) // Inverse Letters
 	case 32 <= r && r <= 63: // Punctuation & Numbers
-		return pos(p)
+		return screenCode(p)
 	case 64 <= r && r <= 95: // Uppercase / LowerCase
-		return pos(p - 64)
+		return screenCode(p - 64)
 	case 96 <= r && r <= 127: // Drawing Symbols / Uppercase
-		return pos(p - 32)
+		return screenCode(p - 32)
 	case 128 <= r && r <= 159: // Shifted Control chars
-		return pos(p + 64)
+		return screenCode(p + 64)
 	case 160 <= r && r <= 191: // Block characters
-		return pos(p - 64)
+		return screenCode(p - 64)
 	case 192 <= r && r <= 254: // Repeate of Drawing Symbols
-		return pos(p - 128)
+		return screenCode(p - 128)
 	case r == 255: // Pi Symbol
-		return pos(94)
+		return screenCode(94)
 	default: // Unknown rune
-		return pos(416) // Shifted space
+		return screenCode(416) // Shifted space
 	}
 }
 
@@ -112,8 +106,8 @@ func Ascii(r rune) Char {
 }
 
 func (c *Char) pixelAt(x, y int) bool {
-	v := chargen[c.offset+x]
-	v = v << y
+	v := chargen[c.offset+y]
+	v = v << x
 	v = v & 128
 	return v == 128
 }
